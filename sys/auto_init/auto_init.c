@@ -12,6 +12,7 @@
  * @file    auto_init_c
  * @brief   initializes any used module that has a trivial init function
  * @author  Oliver Hahm <oliver.hahm@inria.fr>
+ * @author  Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @}
  */
 #include <stdint.h>
@@ -82,12 +83,24 @@
 #include "periph/cpuid.h"
 #endif
 
+#ifdef MODULE_NG_SIXLOWPAN
+#include "net/ng_sixlowpan.h"
+#endif
+
+#ifdef MODULE_NG_IPV6
+#include "net/ng_ipv6.h"
+#endif
+
 #ifdef MODULE_L2_PING
 #include "l2_ping.h"
 #endif
 
 #ifdef MODULE_NG_PKTDUMP
 #include "net/ng_pktdump.h"
+#endif
+
+#ifdef MODULE_NG_UDP
+#include "net/ng_udp.h"
 #endif
 
 #define ENABLE_DEBUG (0)
@@ -279,5 +292,21 @@ void auto_init(void)
 #ifdef MODULE_NG_PKTDUMP
     DEBUG("Auto init ng_pktdump module.\n");
     ng_pktdump_init();
+#endif
+#ifdef MODULE_NG_SIXLOWPAN
+    DEBUG("Auto init ng_sixlowpan module.\n");
+    ng_sixlowpan_init();
+#endif
+#ifdef MODULE_NG_IPV6
+    DEBUG("Auto init ng_ipv6 module.\n");
+    ng_ipv6_init();
+#endif
+#ifdef MODULE_NG_UDP
+    DEBUG("Auto init UDP module.\n");
+    ng_udp_init();
+#endif
+#ifdef MODULE_AUTO_INIT_NG_NETIF
+    DEBUG("Auto init network interfaces.\n");
+    auto_init_ng_netif();
 #endif
 }

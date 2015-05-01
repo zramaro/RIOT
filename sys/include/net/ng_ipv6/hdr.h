@@ -78,7 +78,7 @@ typedef struct __attribute__((packed)) {
      * fields accordingly:
      * * ng_ipv6_hdr_set_version()
      * * ng_ipv6_hdr_get_version()
-     * * ng_ipv6_hdr_is_ipv6_hdr()
+     * * ng_ipv6_hdr_is()
      * * ng_ipv6_hdr_set_tc()
      * * ng_ipv6_hdr_set_tc_ecn()
      * * ng_ipv6_hdr_set_tc_dscp()
@@ -127,7 +127,7 @@ static inline uint8_t ng_ipv6_hdr_get_version(const ng_ipv6_hdr_t *hdr)
  * @return  true, if version field is 6
  * @return  false, otherwise
  */
-static inline bool ng_ipv6_hdr_is_ipv6_hdr(const ng_ipv6_hdr_t *hdr)
+static inline bool ng_ipv6_hdr_is(const ng_ipv6_hdr_t *hdr)
 {
     return (((hdr->v_tc_fl.u8[0]) & 0xf0) == 0x60);
 }
@@ -315,6 +315,13 @@ static inline uint16_t ng_ipv6_hdr_inet_csum(uint16_t sum, ng_ipv6_hdr_t *hdr,
 ng_pktsnip_t *ng_ipv6_hdr_build(ng_pktsnip_t *payload,
                                 uint8_t *src, uint8_t src_len,
                                 uint8_t *dst, uint8_t dst_len);
+
+/**
+ * @brief   Outputs an IPv6 header to stdout.
+ *
+ * @param[in] hdr   An IPv6 header.
+ */
+void ng_ipv6_hdr_print(ng_ipv6_hdr_t *hdr);
 
 #ifdef __cplusplus
 }

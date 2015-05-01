@@ -20,7 +20,9 @@
 #include "net/ng_netreg.h"
 #include "net/ng_nettype.h"
 #include "net/ng_pkt.h"
+#include "net/ng_icmpv6.h"
 #include "net/ng_ipv6.h"
+#include "net/ng_udp.h"
 
 #define _INVALID_TYPE(type) (((type) < NG_NETTYPE_UNDEF) || ((type) >= NG_NETTYPE_NUMOF))
 

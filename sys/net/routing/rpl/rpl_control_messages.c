@@ -35,9 +35,6 @@ static char addr_str[IPV6_MAX_ADDR_STR_LEN];
 #endif
 #include "debug.h"
 
-/* Identification variables */
-static char i_am_root;
-
 /* in send buffer we need space for LL_HDR */
 static uint8_t rpl_send_buffer[BUFFER_SIZE];
 
@@ -244,7 +241,6 @@ void rpl_init_root(rpl_options_t *rpl_opts)
         return;
     }
 
-    i_am_root = 1;
     trickle_start(rpl_process_pid, &dodag->trickle, RPL_MSG_TYPE_TRICKLE_INTERVAL,
                   RPL_MSG_TYPE_TRICKLE_CALLBACK, (1 << dodag->dio_min), dodag->dio_interval_doubling,
                   dodag->dio_redundancy);
@@ -252,9 +248,19 @@ void rpl_init_root(rpl_options_t *rpl_opts)
 
 }
 
+/* TODO: this function is used by the ip layer for source routing (non-storing mode)
+ * to determine if the node is root and change the dodag direction (upwards -> downwards).
+ * This is a hack and needs to be refactored when the new network stack is ready.
+ */
 uint8_t rpl_is_root(void)
 {
-    return i_am_root;
+    rpl_dodag_t *dodag, *end;
+    for (dodag = rpl_dodags, end = dodag + RPL_MAX_DODAGS; dodag < end; dodag++) {
+        if (dodag->node_status == ROOT_NODE) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void rpl_send_DIO(rpl_dodag_t *mydodag, ipv6_addr_t *destination)
@@ -339,15 +345,18 @@ void rpl_send_DAO(rpl_dodag_t *my_dodag, ipv6_addr_t *destination, uint8_t lifet
     if (destination) {
         DEBUGF("Send DAO to %s\n", ipv6_addr_to_str(addr_str, IPV6_MAX_ADDR_STR_LEN, destination));
     }
+    else {
+        DEBUGF("Send DAO to default destination\n");
+    }
 
 #endif
 
-    if (i_am_root) {
+    if (my_dodag == NULL) {
+        DEBUGF("send_DAO: I have no my_dodag\n");
         return;
     }
 
-    if (my_dodag == NULL) {
-        DEBUGF("send_DAO: I have no my_dodag\n");
+    if (my_dodag->node_status == ROOT_NODE) {
         return;
     }
 
@@ -522,34 +531,14 @@ void rpl_recv_DIO(void)
     int len = DIO_BASE_LEN;
 
     rpl_instance_t *dio_inst = rpl_get_instance(rpl_dio_buf->rpl_instanceid);
-    rpl_instance_t *my_inst = rpl_get_my_instance();
 
     if (dio_inst == NULL) {
-        if (my_inst != NULL) {
-            /* already part of a DODAG -> impossible to join other instance */
-            DEBUGF("Not joining another DODAG!\n");
-            return;
-        }
-
         dio_inst = rpl_new_instance(rpl_dio_buf->rpl_instanceid);
 
         if (dio_inst == NULL) {
             DEBUGF("Failed to create a new RPL instance!\n");
             return;
         }
-    }
-    else if (my_inst == NULL) {
-        DEBUGF("Not joined an instance yet\n");
-    }
-    else if (my_inst->id != dio_inst->id) {
-        /* TODO: Add support support for several instances.  */
-
-        /* At the moment, nodes can only join one instance, this is
-        * the instance they join first.
-        * Instances cannot be switched later on.  */
-
-        DEBUGF("Ignoring instance - we are %d and got %d\n", my_inst->id, dio_inst->id);
-        return;
     }
 
     rpl_dodag_t dio_dodag;
@@ -771,13 +760,9 @@ void rpl_recv_DIO(void)
 void rpl_recv_DAO(void)
 {
 #if RPL_DEFAULT_MOP == RPL_MOP_NON_STORING_MODE
-
-    if (!i_am_root) {
-        DEBUGF("[Error] something went wrong - got a DAO.\n");
-        return;
-    }
-
-#endif
+    DEBUGF("[Error] something went wrong - got a DAO.\n");
+    return;
+#else
     ipv6_buf = get_rpl_ipv6_buf();
     rpl_dao_buf = get_rpl_dao_buf();
     DEBUG("instance %04X ", rpl_dao_buf->rpl_instanceid);
@@ -871,6 +856,7 @@ void rpl_recv_DAO(void)
         RPL_COUNTER_INCREMENT(my_dodag->dao_seq);
         rpl_delay_dao(my_dodag);
     }
+#endif
 }
 
 void rpl_recv_DIS(void)

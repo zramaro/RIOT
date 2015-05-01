@@ -62,6 +62,15 @@ endif
 ifneq (,$(filter oneway_malloc,$(USEMODULE)))
     DIRS += oneway-malloc
 endif
+ifneq (,$(filter ng_icmpv6,$(USEMODULE)))
+    DIRS += net/network_layer/ng_icmpv6
+endif
+ifneq (,$(filter ng_icmpv6_echo,$(USEMODULE)))
+    DIRS += net/network_layer/ng_icmpv6/echo
+endif
+ifneq (,$(filter ng_ipv6,$(USEMODULE)))
+    DIRS += net/network_layer/ng_ipv6
+endif
 ifneq (,$(filter ng_ipv6_addr,$(USEMODULE)))
     DIRS += net/network_layer/ng_ipv6/addr
 endif
@@ -83,6 +92,9 @@ endif
 ifneq (,$(filter ng_netif,$(USEMODULE)))
     DIRS += net/crosslayer/ng_netif
 endif
+ifneq (,$(filter ng_netif_hdr,$(USEMODULE)))
+    DIRS += net/crosslayer/ng_netif/hdr
+endif
 ifneq (,$(filter ng_netreg,$(USEMODULE)))
     DIRS += net/crosslayer/ng_netreg
 endif
@@ -91,6 +103,18 @@ ifneq (,$(filter ng_nomac,$(USEMODULE)))
 endif
 ifneq (,$(filter ng_pktbuf,$(USEMODULE)))
     DIRS += net/crosslayer/ng_pktbuf
+endif
+ifneq (,$(filter ng_sixlowpan,$(USEMODULE)))
+    DIRS += net/network_layer/ng_sixlowpan
+endif
+ifneq (,$(filter ng_sixlowpan_ctx,$(USEMODULE)))
+    DIRS += net/network_layer/ng_sixlowpan/ctx
+endif
+ifneq (,$(filter ng_sixlowpan_frag,$(USEMODULE)))
+    DIRS += net/network_layer/ng_sixlowpan/frag
+endif
+ifneq (,$(filter ng_sixlowpan_netif,$(USEMODULE)))
+    DIRS += net/network_layer/ng_sixlowpan/netif
 endif
 ifneq (,$(filter netapi,$(USEMODULE)))
     DIRS += net/crosslayer/netapi
@@ -109,6 +133,9 @@ ifneq (,$(filter ng_pktdump,$(USEMODULE)))
 endif
 ifneq (,$(filter fib,$(USEMODULE)))
     DIRS += net/network_layer/fib
+endif
+ifneq (,$(filter ng_udp,$(USEMODULE)))
+    DIRS += net/transport_layer/ng_udp
 endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))
