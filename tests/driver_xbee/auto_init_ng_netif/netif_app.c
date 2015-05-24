@@ -40,7 +40,7 @@
  * @brief   MAC layer stack configuration
  * @{
  */
-#define STACKSIZE               (KERNEL_CONF_STACKSIZE_DEFAULT)
+#define STACKSIZE               (THREAD_STACKSIZE_DEFAULT)
 #define PRIO                    (0)
 /** @} */
 

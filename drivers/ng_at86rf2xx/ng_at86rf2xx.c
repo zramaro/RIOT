@@ -18,12 +18,14 @@
  * @author      Thomas Eichinger <thomas.eichinger@fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Oliver Hahm <oliver.hahm@inria.fr>
  *
  * @}
  */
 
 #include "hwtimer.h"
 #include "periph/cpuid.h"
+#include "byteorder.h"
 #include "net/ng_ieee802154.h"
 #include "net/ng_netbase.h"
 #include "ng_at86rf2xx_registers.h"
@@ -34,7 +36,7 @@
 #include "debug.h"
 
 
-#define RESET_DELAY             (0U)        /* must be > 625ns */
+#define RESET_DELAY             (1U)        /* must be > 625ns */
 
 
 static void _irq_handler(void *arg)
@@ -85,11 +87,9 @@ int ng_at86rf2xx_init(ng_at86rf2xx_t *dev, spi_t spi, spi_speed_t spi_speed,
 
 void ng_at86rf2xx_reset(ng_at86rf2xx_t *dev)
 {
-    uint8_t tmp;
 #if CPUID_ID_LEN
     uint8_t cpuid[CPUID_ID_LEN];
-    uint16_t addr_short;
-    uint64_t addr_long;
+    eui64_t addr_long;
 #endif
 
     /* trigger hardware reset */
@@ -102,7 +102,8 @@ void ng_at86rf2xx_reset(ng_at86rf2xx_t *dev)
     /* set short and long address */
 #if CPUID_ID_LEN
     cpuid_get(cpuid);
-#if CPUID < 8
+
+#if CPUID_ID_LEN < 8
     /* in case CPUID_ID_LEN < 8, fill missing bytes with zeros */
     for (int i = CPUID_ID_LEN; i < 8; i++) {
         cpuid[i] = 0;
@@ -117,13 +118,8 @@ void ng_at86rf2xx_reset(ng_at86rf2xx_t *dev)
     cpuid[0] |= 0x02;
     /* copy and set long address */
     memcpy(&addr_long, cpuid, 8);
-    ng_at86rf2xx_set_addr_long(dev, addr_long);
-    /* now compress the long addr to form the short address */
-    for (int i = 2; i < 8; i++) {
-        cpuid[i & 0x01] ^= cpuid[i];
-    }
-    memcpy(&addr_short, cpuid, 2);
-    ng_at86rf2xx_set_addr_short(dev, addr_short);
+    ng_at86rf2xx_set_addr_long(dev, NTOHLL(addr_long.uint64.u64));
+    ng_at86rf2xx_set_addr_short(dev, NTOHS(addr_long.uint16[0].u16));
 #else
     ng_at86rf2xx_set_addr_long(dev, NG_AT86RF2XX_DEFAULT_ADDR_LONG);
     ng_at86rf2xx_set_addr_short(dev, NG_AT86RF2XX_DEFAULT_ADDR_SHORT);
@@ -145,17 +141,14 @@ void ng_at86rf2xx_reset(ng_at86rf2xx_t *dev)
     dev->proto = NG_NETTYPE_UNDEF;
 #endif
     /* enable safe mode (protect RX FIFO until reading data starts) */
-    tmp = NG_AT86RF2XX_TRX_CTRL_2_MASK__RX_SAFE_MODE;
-#ifdef MODULE_NG_AT86RF212
-    /* settings used by Linux 4.0rc at86rf212b driver */
-    tmp |= (NG_AT86RF2XX_TRX_CTRL_2_MASK__SUB_MODE
-            | NG_AT86RF2XX_TRX_CTRL_2_MASK__OQPSK_SCRAM_EN);
+    ng_at86rf2xx_reg_write(dev, NG_AT86RF2XX_REG__TRX_CTRL_2,
+                          NG_AT86RF2XX_TRX_CTRL_2_MASK__RX_SAFE_MODE);
+#ifdef MODULE_NG_AT86RF212B
+    ng_at86rf2xx_set_freq(dev,NG_AT86RF2XX_FREQ_915MHZ);
 #endif
-    ng_at86rf2xx_reg_write(dev, NG_AT86RF2XX_REG__TRX_CTRL_2, tmp);
     /* enable interrupts */
     ng_at86rf2xx_reg_write(dev, NG_AT86RF2XX_REG__IRQ_MASK,
-                           (NG_AT86RF2XX_IRQ_STATUS_MASK__RX_START |
-                            NG_AT86RF2XX_IRQ_STATUS_MASK__TRX_END));
+                          NG_AT86RF2XX_IRQ_STATUS_MASK__TRX_END);
     /* go into RX state */
     ng_at86rf2xx_set_state(dev, NG_AT86RF2XX_STATE_RX_AACK_ON);
 

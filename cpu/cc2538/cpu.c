@@ -10,7 +10,7 @@
  * @ingroup     cpu_cc2538
  * @{
  *
- * @file        cpu.c
+ * @file
  * @brief       Implementation of the CPU initialization
  *
  * @author      Ian Martin <ian@locicontrols.com>
@@ -94,4 +94,3 @@ static void cpu_clock_init(void)
     while (!SYS_CTRL->CLOCK_STAbits.SYNC_32K);
 #endif
 }
-

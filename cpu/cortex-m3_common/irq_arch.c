@@ -7,10 +7,10 @@
  */
 
 /**
- * @ingroup     cpu_cortex-m3
+ * @ingroup     cpu_cortexm3_common
  * @{
  *
- * @file        irq_arch.c
+ * @file
  * @brief       Implementation of the kernels irq interface
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>

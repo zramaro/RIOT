@@ -10,7 +10,7 @@
  * @ingroup     cpu_nrf51822
  * @{
  *
- * @file        startup.c
+ * @file
  * @brief       Startup code and interrupt vector definition
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
@@ -22,7 +22,7 @@
 
 #include "board.h"
 #include "cpu.h"
-#include "crash.h"
+#include "panic.h"
 
 /**
  * memory markers as defined in the linker script
